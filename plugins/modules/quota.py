@@ -36,12 +36,7 @@ options:
         description: Number of fixed IP's to allow.
         type: int
     floating_ips:
-        description: Number of floating IP's to allow in Compute.
-        aliases: ['compute_floating_ips']
-        type: int
-    floatingip:
         description: Number of floating IP's to allow in Network.
-        aliases: ['network_floating_ips']
         type: int
     gigabytes:
         description: Maximum volume storage allowed for project.
@@ -51,14 +46,16 @@ options:
             - Per driver volume storage quotas.  Keys should be
               prefixed with C(gigabytes_) values should be ints.
         type: dict
-    injected_file_size:
+    injected_file_content_bytes:
         description: Maximum file size in bytes.
+        aliases: ['injected_file_size']
         type: int
     injected_files:
         description: Number of injected files to allow.
         type: int
-    injected_path_size:
+    injected_file_path_bytes:
         description: Maximum path size.
+        aliases: ['injected_path_size']
         type: int
     instances:
         description: Maximum number of instances allowed.
@@ -66,23 +63,27 @@ options:
     key_pairs:
         description: Number of key pairs to allow.
         type: int
-    loadbalancer:
+    load_balancers:
         description: Number of load balancers to allow.
+        aliases: ['loadbalancer']
         type: int
     metadata_items:
        description: Number of metadata items allowed per instance.
        type: int
-    network:
+    networks:
         description: Number of networks to allow.
+        aliases: ['network']
         type: int
     per_volume_gigabytes:
         description: Maximum size in GB's of individual volumes.
         type: int
-    pool:
+    pools:
         description: Number of load balancer pools to allow.
+        aliases: ['pool']
         type: int
-    port:
+    ports:
         description: Number of Network ports to allow, this needs to be greater than the instances limit.
+        aliases: ['port']
         type: int
     properties:
         description: Number of properties to allow.
@@ -90,17 +91,21 @@ options:
     ram:
         description: Maximum amount of ram in MB to allow.
         type: int
-    rbac_policy:
+    rbac_policies:
         description: Number of policies to allow.
+        aliases: ['rbac_policy']
         type: int
-    router:
+    routers:
         description: Number of routers to allow.
+        aliases: ['router']
         type: int
-    security_group_rule:
+    security_group_rules:
         description: Number of rules per security group to allow.
+        aliases: ['security_group_rule']
         type: int
-    security_group:
+    security_groups:
         description: Number of security groups to allow.
+        aliases: ['security_group']
         type: int
     server_group_members:
         description: Number of server group members to allow.
@@ -116,11 +121,13 @@ options:
             - Per-driver volume snapshot quotas.  Keys should be
               prefixed with C(snapshots_) values should be ints.
         type: dict
-    subnet:
+    subnets:
         description: Number of subnets to allow.
+        aliases: ['subnet']
         type: int
-    subnetpool:
+    subnet_pools:
         description: Number of subnet pools to allow.
+        aliases: ['subnetpool']
         type: int
     volumes:
         description: Number of volumes to allow.
@@ -178,7 +185,6 @@ EXAMPLES = '''
     cores: "{{ item.cores }}"
     fixed_ips: "{{ item.fixed_ips }}"
     floating_ips: "{{ item.floating_ips }}"
-    floatingip: "{{ item.floatingip }}"
     gigabytes: "{{ item.gigabytes }}"
     injected_file_size: "{{ item.injected_file_size }}"
     injected_files: "{{ item.injected_files }}"
@@ -189,11 +195,11 @@ EXAMPLES = '''
     metadata_items: "{{ item.metadata_items }}"
     per_volume_gigabytes: "{{ item.per_volume_gigabytes }}"
     pool: "{{ item.pool }}"
-    port: "{{ item.port }}"
+    ports: "{{ item.ports }}"
     properties: "{{ item.properties }}"
     ram: "{{ item.ram }}"
-    security_group_rule: "{{ item.security_group_rule }}"
-    security_group: "{{ item.security_group }}"
+    security_group_rules: "{{ item.security_group_rules }}"
+    security_groups: "{{ item.security_groups }}"
     server_group_members: "{{ item.server_group_members }}"
     server_groups: "{{ item.server_groups }}"
     snapshots: "{{ item.snapshots }}"
@@ -233,16 +239,16 @@ openstack_quotas:
                 server_groups: 10
             },
             network: {
-                floatingip: 50,
+                floating_ips: 50,
                 loadbalancer: 10,
-                network: 10,
+                networks: 10,
                 pool: 10,
-                port: 160,
+                ports: 160,
                 rbac_policy: 10,
-                router: 10,
-                security_group: 10,
-                security_group_rule: 100,
-                subnet: 10,
+                routers: 10,
+                security_groups: 10,
+                security_group_rules: 100,
+                subnets: 10,
                 subnetpool: -1
             },
             volume: {
@@ -272,32 +278,31 @@ class QuotaModule(OpenStackModule):
         cores=dict(required=False, type='int', default=None),
         fixed_ips=dict(required=False, type='int', default=None),
         floating_ips=dict(required=False, type='int', default=None, aliases=['compute_floating_ips']),
-        floatingip=dict(required=False, type='int', default=None, aliases=['network_floating_ips']),
         gigabytes=dict(required=False, type='int', default=None),
         gigabytes_types=dict(required=False, type='dict', default={}),
         injected_file_size=dict(required=False, type='int', default=None),
         injected_files=dict(required=False, type='int', default=None),
-        injected_path_size=dict(required=False, type='int', default=None),
+        injected_file_content_bytes=dict(required=False, type='int', default=None, aliases=['injected_path_size']),
         instances=dict(required=False, type='int', default=None),
         key_pairs=dict(required=False, type='int', default=None, no_log=False),
         loadbalancer=dict(required=False, type='int', default=None),
         metadata_items=dict(required=False, type='int', default=None),
-        network=dict(required=False, type='int', default=None),
+        networks=dict(required=False, type='int', default=None, aliases=['network']),
         per_volume_gigabytes=dict(required=False, type='int', default=None),
         pool=dict(required=False, type='int', default=None),
-        port=dict(required=False, type='int', default=None),
+        ports=dict(required=False, type='int', default=None, aliases=['port']),
         project=dict(required=False, type='int', default=None),
         properties=dict(required=False, type='int', default=None),
         ram=dict(required=False, type='int', default=None),
         rbac_policy=dict(required=False, type='int', default=None),
-        router=dict(required=False, type='int', default=None),
-        security_group_rule=dict(required=False, type='int', default=None),
-        security_group=dict(required=False, type='int', default=None),
+        routers=dict(required=False, type='int', default=None, aliases=['router']),
+        security_group_rules=dict(required=False, type='int', default=None, aliases=['security_group_rule']),
+        security_groups=dict(required=False, type='int', default=None, aliases=['security_group']),
         server_group_members=dict(required=False, type='int', default=None),
         server_groups=dict(required=False, type='int', default=None),
         snapshots=dict(required=False, type='int', default=None),
         snapshots_types=dict(required=False, type='dict', default={}),
-        subnet=dict(required=False, type='int', default=None),
+        subnets=dict(required=False, type='int', default=None, aliases=['subnet']),
         subnetpool=dict(required=False, type='int', default=None),
         volumes=dict(required=False, type='int', default=None),
         volumes_types=dict(required=False, type='dict', default={})
@@ -353,18 +358,28 @@ class QuotaModule(OpenStackModule):
     def _system_state_change_details(self, project_quota_output):
         quota_change_request = {}
         changes_required = False
-
+        # Some fields are listed in multiple quota type but can only be updated in the correct quota type
+        expected_fields = {
+            'compute': ['instances', 'cores', 'ram', 'metadata_items', 'key_pairs', 'server_groups',
+                        'server_group_members', 'injected_files', 'injected_file_content_bytes',
+                        'injected_file_path_bytes'],
+            'volume': ['volumes', 'volume_snapshots', 'gigabytes', 'per_volume_gigabytes', 'injected_file_path_bytes'
+                       'backups', 'backup_gigabytes'],
+            'network': ['networks', 'subnets', 'ports', 'routers', 'floating_ips', 'security_groups',
+                        'security_group_rules', 'subnet_pools', 'rbac_policies', 'pools',
+                        'load_balancers'],
+        }
         for quota_type in project_quota_output.keys():
             for quota_option in project_quota_output[quota_type].keys():
                 if quota_option in self.params and self.params[quota_option] is not None:
-                    if project_quota_output[quota_type][quota_option] != self.params[quota_option]:
-                        changes_required = True
+                    if quota_option in expected_fields[quota_type]:
+                        if project_quota_output[quota_type][quota_option] != self.params[quota_option]:
+                            changes_required = True
 
-                        if quota_type not in quota_change_request:
-                            quota_change_request[quota_type] = {}
+                            if quota_type not in quota_change_request:
+                                quota_change_request[quota_type] = {}
 
-                        quota_change_request[quota_type][quota_option] = self.params[quota_option]
-
+                            quota_change_request[quota_type][quota_option] = self.params[quota_option]
         return (changes_required, quota_change_request)
 
     def _system_state_change(self, project_quota_output):
